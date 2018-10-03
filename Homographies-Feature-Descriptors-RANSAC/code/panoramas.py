@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from scipy.ndimage.morphology import distance_transform_edt
-from planarH import ransacH
+from planarH import ransacH, computeH
 from BRIEF import briefLite,briefMatch,plotMatches
 
 def imageStitching(im1, im2, H2to1):
@@ -18,7 +18,8 @@ def imageStitching(im1, im2, H2to1):
     '''
     #######################################
     # TO DO ...
-    return pano_im
+    warp_im = cv2.warpPerspective(im2, H2to1, (im1.shape[0], im2.shape[1]))
+    return warp_im #pano_im
 
 
 def imageStitching_noClip(im1, im2, H2to1):
@@ -39,10 +40,15 @@ if __name__ == '__main__':
     locs2, desc2 = briefLite(im2)
     matches = briefMatch(desc1, desc2)
     # plotMatches(im1,im2,matches,locs1,locs2)
-    H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
-    pano_im = imageStitching_noClip(im1, im2, H2to1)
-    print(H2to1)
-    cv2.imwrite('../results/panoImg.png', pano_im)
+    #H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+    H2to1 = computeH(locs1, locs2)
+    
+    #pano_im = imageStitching_noClip(im1, im2, H2to1)
+    pano_im = imageStitching(im1, im2, H2to1)
+    
+    #print(H2to1)
+    #-----TODO---- DONT FORGET TO CHANGE 
+    #cv2.imwrite('../results/panoImgTest.png', pano_im)
     cv2.imshow('panoramas', pano_im)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
