@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 levels = [-1,0,1,2,3,4]
 im = cv2.imread('../data/model_chickenbroth.jpg')
+#im = cv2.imread('../data/checker.png')
 locsDoG, gaussian_pyramid = keypointDetect.DoGdetector(im)
 
 N, _ = locsDoG.shape

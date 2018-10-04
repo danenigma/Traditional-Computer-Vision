@@ -68,6 +68,9 @@ def computePrincipalCurvature(DoG_pyramid):
 	Tr_H  = H_XX + H_YY
 	Det_H = np.multiply(H_XX, H_YY) - np.square(H_XY)
 	principal_curvature = np.divide(np.square(Tr_H), Det_H)
+	nan_index  = np.isnan(principal_curvature)
+	temp = 1000*nan_index
+	principal_curvature[nan_index] = temp[nan_index]
 	return principal_curvature
     
 
