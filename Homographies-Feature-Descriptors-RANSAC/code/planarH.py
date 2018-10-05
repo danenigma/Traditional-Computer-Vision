@@ -69,6 +69,7 @@ def ransacH(matches, locs1, locs2, num_iter=5000, tol=2):
 		H = computeH(randLoc1.T, randLoc2.T)
 		
 		loc2Proj = np.matmul(H, matchedLoc2Homo)
+		#normalize by lamda
 		loc2ProjNorm = (loc2Proj / loc2Proj[2, :][None,:])[:2, :]
 
 		dst = np.diag(cdist(loc2ProjNorm.T, matchedLoc1))
