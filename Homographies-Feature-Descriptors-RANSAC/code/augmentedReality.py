@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import cv2
+import math
 import planarH
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
@@ -34,44 +35,56 @@ def compute_extrinsics(K, H):
 	
 	
 	if np.linalg.det(R) == -1:
-		R[:, 2] = R[:, 2]*-1
-	
+		R[:, 2] = R[:, 2]*-1	
 	lamda  = np.sum(np.divide(H_prim[:,:2], R[:, :2]))/6
 	t = H_prim[:, 2]/lamda
 	return R, t
 	
 def project_extrinsics(K, W, R, t):
-	ones  = np.ones((1, W.shape[1]))
-	Whomo = np.concatenate((W, ones), axis=0)
 	R_t  = np.zeros((3, 4))
 	R_t[:, :3] = R
 	R_t[:, 3]  = t
-	#print(R_t)
-	Xhomo = np.matmul(K, np.matmul(R_t, Whomo))
-	X = Xhomo#/Xhomo[2, :][None,:]
-	return X
+	proj_mat = np.dot(K, R_t)
+	Xout = cv2.perspectiveTransform(W.T.reshape(-1, 1 , 3), proj_mat).T
+	return Xout.squeeze(1)
+	
+if __name__ =='__main__':
 
-W = np.array([[0., 18.2, 18.2, 0.],
-			  [0., 0., 26., 26.],
-			  [0., 0., 0., 0.]]).astype('float')
-X = np.array([[483, 1704, 2175, 67],
-			  [810, 781, 2217, 2286]])
-K = np.array([[3043.72, 0.0, 1196.00],
-			  [0.0, 3043.72, 1604.00],
-			  [0.0, 0.0, 1.0]])
-			  
-H = planarH.computeH(X, W[:2, :])
-R, t = compute_extrinsics(K, H)
 
-sphere = getSphere()
-X = project_extrinsics(K, W, R, t)
-#print(X)
-#im = cv2.imread('../data/prince_book.jpeg')
-#plt.imshow(im, cmap='gray')
-#for i in range(X.shape[1]):
-#	plt.plot(X[0, i], X[1, i], 'ro')
-#plt.show()
-#fig = plt.figure()
-#ax = plt.axes(projection='3d')
-#ax.scatter3D(sphere[0,:], sphere[1,:], sphere[2,:], c=sphere[2,:], cmap='Greens');
-#plt.show()
+	W = np.array([[0., 18.2, 18.2, 0.],
+				  [0., 0., 26., 26.],
+				  [0., 0., 0., 0.]]).astype('float')
+	X = np.array([[483, 1704, 2175, 67],
+				  [810, 781, 2217, 2286]])
+	K = np.array([[3043.72, 0.0, 1196.00],
+				  [0.0, 3043.72, 1604.00],
+				  [0.0, 0.0, 1.0]])
+				  
+	M = np.array([[1,   0., 300.],
+				  [0.,  1,  600],
+				  [0.,  0., 1.]]).astype('float')			  
+				  
+	H = planarH.computeH(X, W[:2, :])
+	R, t = compute_extrinsics(K, H)
+	sphere = getSphere()
+
+	#plot actual sphere
+	#fig = plt.figure()
+	#ax = plt.axes(projection='3d')
+	#ax.scatter3D(sphere[0,:], sphere[1,:], sphere[2,:], c=sphere[2,:], cmap='Greens');
+	#plt.show()
+
+	projectedSphere = project_extrinsics(K, sphere, R, t)
+	projectedSphereH = np.ones((3, projectedSphere.shape[1]))
+	projectedSphereH[:2, :] = projectedSphere
+	
+	shiftedSphere = np.matmul(M, projectedSphereH)[:2, :]
+	N  = shiftedSphere.shape[1]
+	im = cv2.imread('../data/prince_book.jpeg')
+	plt.imshow(im, cmap='gray')
+	
+	for i in range(N):
+		plt.plot(shiftedSphere[0, i], shiftedSphere[1, i], 'yo')	
+	plt.show()
+	
+

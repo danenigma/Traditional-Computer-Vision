@@ -6,8 +6,8 @@ import keypointDetect
 import matplotlib.pyplot as plt
 
 levels = [-1,0,1,2,3,4]
-im = cv2.imread('../data/model_chickenbroth.jpg')
-#im = cv2.imread('../data/checker.png')
+#im = cv2.imread('../data/model_chickenbroth.jpg')
+#im = cv2.imread('../data/prince_book.jpeg')
 locsDoG, gaussian_pyramid = keypointDetect.DoGdetector(im)
 
 N, _ = locsDoG.shape
@@ -16,7 +16,6 @@ print('N:', N)
 im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 plt.imshow(im, cmap='gray')
 for i in range(N):
-	
 	plt.plot([locsDoG[i][0]],[locsDoG[i][1]],'ro')
 plt.show()
 """

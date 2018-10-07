@@ -13,7 +13,7 @@ def getMask(im):
 	mask[:,0] = 1
 	mask[:,-1] = 1
 	mask = distance_transform_edt(1-mask)
-	mask = mask/mask.max(0)
+	mask = mask/mask.max()
 
 	return mask
 def imageStitching(im1, im2, H2to1):
@@ -44,25 +44,30 @@ def imageStitching_noClip(im1, im2, H2to1):
 	''' 
 	######################################
 	# TO DO ...
-	h4 = 200 
 	W  = 1700
-	H2, W2 = im2.shape[0],im2.shape[1] 
+	H2, W2 = im2.shape[0],im2.shape[1]
+	H1, W1 = im1.shape[0],im1.shape[1]
+	 
+	im2_corners = np.array([[0, 0, 1],
+							[W2, 0, 1],
+							[0, H2, 1],
+							[W2, H2, 1]]).T
+	im1_corners = np.array([[0, 0, 1],
+						[W1, 0, 1],
+						[0, H1, 1],
+						[W1, H1, 1]]).T
+						
+	im2_corners_proj  = np.matmul(H2to1, im2_corners)
+	im2_corners_proj /= im2_corners_proj[2, :][None,:]
 	
-	[W2_, H2_, lamda] = np.matmul(H2to1, np.array([W2, H2, 1]).T)
-	[W20_, H20_, lamda0] = np.matmul(H2to1, np.array([0, 0, 1]).T)
-	
-	W2_/=lamda
-	H2_/=lamda
-	W20_/=lamda0
-	H20_/=lamda0
-	
-	print(W20_, H20_, W2_, H2_)
-	h4 = -H20_ + 100
-	H = int(H2 + h4)
+	H  = np.max(im2_corners_proj.astype('int')[1, :]) - np.min(im2_corners_proj.astype('int')[1, :])
+	h4 = H - im2_corners_proj[1, 3]
+
 	pano_im  = np.zeros((H, W, 3))
-	M = np.array([[1, 0., 0.],
-				   [0., 1, h4],
+	M = np.array([[1., 0., 0.],
+				   [0., 1., h4],
 				   [0., 0., 1.]]).astype('float')
+	
 	warp_im1 = cv2.warpPerspective(im1, M, (W, H))
 	im1_mask = getMask(im1)
 	warp_im1_mask = cv2.warpPerspective(im1_mask, M, (W, H))
@@ -73,22 +78,37 @@ def imageStitching_noClip(im1, im2, H2to1):
 	
 	
 	#im2_mask = getMask(warp_im2)
-	alpha = warp_im2_mask>warp_im2_mask
-	print(alpha)
-	#alpha = np.repeat(alpha[:, :, np.newaxis], 3, axis=2)
+	
+	alpha = warp_im1_mask>warp_im2_mask
+	
+	
+	alpha = np.repeat(alpha[:, :, np.newaxis], 3, axis=2).astype('float')
 	#print(alpha.shape)
-
+	#print(alpha)
 	#pano_im =  alpha*warp_im2 + (1-alpha)*warp_im1
-	out = cv2.addWeighted(warp_im1, 0.5, warp_im2, 0.5,0)
-	"""
-	(ret,data_map) = cv2.threshold(cv2.cvtColor(warp_im2, cv2.COLOR_BGR2GRAY), 
-	0, 255, cv2.THRESH_BINARY)
-	pano_im = cv2.add(pano_im, warp_im1, mask=np.bitwise_not(data_map), dtype=cv2.CV_8U)
-	# Now add the warped image
-	final_img = cv2.add(pano_im, warp_im2, dtype=cv2.CV_8U)
-	"""
-	return out#warp_im2_mask# final_img
+	#out = cv2.addWeighted(warp_im1_mask, 1, warp_im2_mask, 1, 0)
+	pano_im = np.multiply(alpha, warp_im1).astype('uint8') + np.multiply(1-alpha, warp_im2).astype('uint8')
+	#(_, warp_im2_mask) = cv2.threshold(cv2.cvtColor(warp_im2, cv2.COLOR_BGR2GRAY), 
+	#												0, 255, cv2.THRESH_BINARY)
 
+	#pano_im = cv2.add(pano_im, warp_im1, mask=np.bitwise_not(warp_im2_mask), 
+	#									 dtype=cv2.CV_8U)
+
+	#final_img = cv2.add(pano_im, warp_im2, dtype=cv2.CV_8U)
+	return pano_im
+def generatePanorama(im1, im2):
+	H_file = 'H2to1.npy'
+	if os.path.isfile(H_file):
+		H2to1= np.load(H_file)
+	else:
+		print('RANSACing....')
+		locs1, desc1 = briefLite(im1)
+		locs2, desc2 = briefLite(im2)
+		matches = briefMatch(desc1, desc2)
+		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		np.save('H2to1.npy', H2to1)
+	pano_im = imageStitching_noClip(im1, im2, H2to1)
+	return pano_im
 
 if __name__ == '__main__':
 	im1 = cv2.imread('../data/incline_L.png')
@@ -96,27 +116,10 @@ if __name__ == '__main__':
 
 	#plotMatches(im1,im2,matches,locs1,locs2)
 
+	pano_im = generatePanorama(im1, im2)
 
-	#H2to1 = computeH(locs1, locs2)
-	H_file = 'H2to1.npy'
-	H2to1  = None
-	if os.path.isfile(H_file):
-		H2to1= np.load(H_file)
-	else:
-		print('RANSACing....')
-		
-		locs1, desc1 = briefLite(im1)
-		locs2, desc2 = briefLite(im2)
-		matches = briefMatch(desc1, desc2)
-		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
-		np.save('H2to1.npy', H2to1)
-
-	#pano_im = imageStitching_noClip(im1, im2, H2to1)
-	pano_im = imageStitching_noClip(im1, im2, H2to1)
-
-	#print(H2to1)
 	#-----TODO---- DONT FORGET TO CHANGE 
-	#cv2.imwrite('../results/panoImgTest.png', pano_im)
+	cv2.imwrite('../results/panoImg.png', pano_im)
 	cv2.imshow('panoramas', pano_im)
-	cv2.waitKey(0)
+	cv2.waitKey(10000)
 	cv2.destroyAllWindows()

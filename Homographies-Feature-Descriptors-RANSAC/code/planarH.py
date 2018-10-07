@@ -26,11 +26,10 @@ def computeH(p1, p2):
 		A[2*i, :] = np.array([0, 0, 0,-u ,-v,-1,y*u,y*v, y])
 		A[2*i+1, :] = np.array([u, v, 1, 0, 0, 0, -x*u, -x*v, -x])
 		
-	U, S, V = np.linalg.svd(A, False)
-	h33 = V[-1,-1]
+	U, S, V = np.linalg.svd(A, True)
+	
 	H2to1 = np.reshape(V[-1,:],(3,3))
-	#print(H2to1)
-	#print(np.matmul(H2to1.T, H2to1))
+
 	return H2to1
 
 def ransacH(matches, locs1, locs2, num_iter=5000, tol=2):
