@@ -3,30 +3,95 @@ import os
 import numpy as np
 import BRIEF
 import keypointDetect
+import panoramas
 import matplotlib.pyplot as plt
+def test_keypoint():
+	levels = [-1,0,1,2,3,4]
+	im = cv2.imread('../data/model_chickenbroth.jpg')
+	#im = cv2.imread('../data/prince_book.jpeg')
+	locsDoG, gaussian_pyramid = keypointDetect.DoGdetector(im)
 
-levels = [-1,0,1,2,3,4]
-#im = cv2.imread('../data/model_chickenbroth.jpg')
-#im = cv2.imread('../data/prince_book.jpeg')
-locsDoG, gaussian_pyramid = keypointDetect.DoGdetector(im)
+	N, _ = locsDoG.shape
 
-N, _ = locsDoG.shape
+	print('N:', N)
 
-print('N:', N)
-im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-plt.imshow(im, cmap='gray')
-for i in range(N):
-	plt.plot([locsDoG[i][0]],[locsDoG[i][1]],'ro')
-plt.show()
-"""
-for i in range(N):
-	print(locsDoG[i])
-	cv2.circle(im, (locsDoG[i][0], locsDoG[i][1]), 1, (0,0,255), 1)
-cv2.imshow('out', im)
-cv2.waitKey(0)
-"""
-#loc, desc = BRIEF.briefLite(im)
-#print(loc.shape, desc.shape)
+	im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+	plt.imshow(im, cmap='gray')
+	for i in range(N):
+		plt.plot([locsDoG[i][0]],[locsDoG[i][1]],'ro')
+	plt.show()
+def test_BRIEF():
 	
-print('Done!!')
+	im1 = cv2.imread('../data/model_chickenbroth.jpg')
+	im2 = cv2.imread('../data/chickenbroth_05.jpg')
+
+	locs1, desc1 = BRIEF.briefLite(im1)
+	locs2, desc2 = BRIEF.briefLite(im2)
+	matches = BRIEF.briefMatch(desc1, desc2)
+	BRIEF.plotMatches(im1,im2,matches,locs1,locs2)
+
+def test_panorama():
+
+	H_file = '../results/q6_1.npy'
+	if os.path.isfile(H_file):
+		H2to1= np.load(H_file)
+	else:
+		print('RANSACing....')
+		locs1, desc1 = briefLite(im1)
+		locs2, desc2 = briefLite(im2)
+		matches = briefMatch(desc1, desc2)
+		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		np.save('../results/q6_1.npy', H2to1)
+
+
+	im1 = cv2.imread('../data/incline_L.png')
+	im2 = cv2.imread('../data/incline_R.png')
+	im2_wraped = cv2.warpPerspective(im2, H2to1, (im1.shape[1] + 740, 
+												  im1.shape[0]))
+	
+	#im3 = imageStitching(im1, im2)
+	cv2.imwrite('../results/6_1.jpg', im2_wraped)
+	cv2.imshow('panoramas', im2_wraped)
+	cv2.waitKey(5000)
+	cv2.destroyAllWindows()
+def test_panorama_noclip():
+
+	H_file = '../results/q6_1.npy'
+	if os.path.isfile(H_file):
+		H2to1= np.load(H_file)
+	else:
+		print('RANSACing....')
+		locs1, desc1 = briefLite(im1)
+		locs2, desc2 = briefLite(im2)
+		matches = briefMatch(desc1, desc2)
+		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		np.save('../results/q6_1.npy', H2to1)
+
+	im1 = cv2.imread('../data/incline_L.png')
+	im2 = cv2.imread('../data/incline_R.png')
+	
+	pano_im = panoramas.imageStitching_noClip(im1, im2, H2to1)
+	cv2.imwrite('../results/q6_2_pan.jpg', pano_im)
+	cv2.imshow('panoramas', pano_im)
+	cv2.waitKey(10000)
+	cv2.destroyAllWindows()
+
+def test_generate_panorama():
+	im1 = cv2.imread('../data/incline_L.png')
+	im2 = cv2.imread('../data/incline_R.png')
+	pano_im = panoramas.generatePanorama(im1, im2)
+	cv2.imwrite('../results/q6_3.jpg', pano_im)
+	cv2.imshow('panoramas', pano_im)
+	cv2.waitKey(10000)
+	cv2.destroyAllWindows()
+
+def test_augmented_reality():
+	pass
+
+if __name__ == '__main__':
+	#test_keypoint()
+	test_BRIEF()
+	#test_panorama()	
+	#test_panorama_noclip()	
+	#test_generate_panorama()
 

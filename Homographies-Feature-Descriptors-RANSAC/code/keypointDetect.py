@@ -174,12 +174,12 @@ if __name__ == '__main__':
 
 	DoG_pyr, DoG_levels = createDoGPyramid(im_pyr, levels)
 	#print(DoG_pyr.shape)
-	#displayPyramid(DoG_pyr)
+	displayPyramid(DoG_pyr)
 
 	# test compute principal curvature
-	pc_curvature = computePrincipalCurvature(DoG_pyr)
+	#pc_curvature = computePrincipalCurvature(DoG_pyr)
 	
-	displayPyramid(pc_curvature)
+	#displayPyramid(pc_curvature)
 	
 	# test get local extrema
 	#th_contrast = 0.03
@@ -190,3 +190,6 @@ if __name__ == '__main__':
 	
 	#locsDoG, gaussian_pyramid = DoGdetector(im)
 	#print(locsDoG, gaussian_pyramid.shape)
+	
+	
+	

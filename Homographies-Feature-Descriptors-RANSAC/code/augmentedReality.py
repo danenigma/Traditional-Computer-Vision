@@ -47,9 +47,7 @@ def project_extrinsics(K, W, R, t):
 	proj_mat = np.dot(K, R_t)
 	Xout = cv2.perspectiveTransform(W.T.reshape(-1, 1 , 3), proj_mat).T
 	return Xout.squeeze(1)
-	
-if __name__ =='__main__':
-
+def project_sphere():
 
 	W = np.array([[0., 18.2, 18.2, 0.],
 				  [0., 0., 26., 26.],
@@ -87,4 +85,6 @@ if __name__ =='__main__':
 		plt.plot(shiftedSphere[0, i], shiftedSphere[1, i], 'yo')	
 	plt.show()
 	
-
+	
+if __name__ =='__main__':
+	project_sphere()

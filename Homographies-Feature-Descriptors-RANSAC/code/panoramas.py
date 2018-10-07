@@ -96,30 +96,26 @@ def imageStitching_noClip(im1, im2, H2to1):
 
 	#final_img = cv2.add(pano_im, warp_im2, dtype=cv2.CV_8U)
 	return pano_im
+	
 def generatePanorama(im1, im2):
-	H_file = 'H2to1.npy'
-	if os.path.isfile(H_file):
-		H2to1= np.load(H_file)
-	else:
-		print('RANSACing....')
-		locs1, desc1 = briefLite(im1)
-		locs2, desc2 = briefLite(im2)
-		matches = briefMatch(desc1, desc2)
-		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
-		np.save('H2to1.npy', H2to1)
+
+	locs1, desc1 = briefLite(im1)
+	locs2, desc2 = briefLite(im2)
+	matches = briefMatch(desc1, desc2)
+	H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)		
 	pano_im = imageStitching_noClip(im1, im2, H2to1)
+	
 	return pano_im
 
 if __name__ == '__main__':
+
 	im1 = cv2.imread('../data/incline_L.png')
 	im2 = cv2.imread('../data/incline_R.png')
 
-	#plotMatches(im1,im2,matches,locs1,locs2)
-
 	pano_im = generatePanorama(im1, im2)
 
-	#-----TODO---- DONT FORGET TO CHANGE 
 	cv2.imwrite('../results/panoImg.png', pano_im)
 	cv2.imshow('panoramas', pano_im)
 	cv2.waitKey(10000)
 	cv2.destroyAllWindows()
+	
