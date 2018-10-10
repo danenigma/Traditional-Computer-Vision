@@ -9,23 +9,18 @@ def drawKeys(im, locsDoG):
 	for i in range(N):
 		cv2.circle(im, (locsDoG[i][0], locsDoG[i][1]), 1, (0,0,255), 1)
 	return im
-def rotate_image(mat, angle):
-    height, width = mat.shape[:2]
-    image_center = (width / 2, height / 2)
+	
+def rotateImage(im, angle):
 
-    rotation_mat = cv2.getRotationMatrix2D(image_center, angle, 1)
-
-    radians = math.radians(angle)
-    sin = math.sin(radians)
-    cos = math.cos(radians)
-    bound_w = int((height * abs(sin)) + (width * abs(cos)))
-    bound_h = int((height * abs(cos)) + (width * abs(sin)))
-
-    rotation_mat[0, 2] += ((bound_w / 2) - image_center[0])
-    rotation_mat[1, 2] += ((bound_h / 2) - image_center[1])
-
-    rotated_mat = cv2.warpAffine(mat, rotation_mat, (bound_w, bound_h))
-    return rotated_mat 
+	H, W = im.shape[:2]
+	im_center  = (W//2, H//2)
+	rot_matrix = cv2.getRotationMatrix2D(im_center, angle, 1)
+	corner  = np.matmul(np.abs(rot_matrix[:, :2]), np.array([W, H]).T).astype('int')
+	rot_matrix[0, 2] += ((corner[0] / 2) - im_center[0])
+	rot_matrix[1, 2] += ((corner[1] / 2) - im_center[1])
+	im_out = cv2.warpAffine(im, rot_matrix, (corner[0], corner[1]))
+	
+	return im_out 
 
 if __name__ == '__main__':
 
@@ -35,11 +30,10 @@ if __name__ == '__main__':
 
 	for angle in range(0, 370, 10):
 	
-		im_r = rotate_image(im1, angle)
+		im_r = rotateImage(im1, angle)
 		locs2, desc2 = briefLite(im_r)
 		matches = briefMatch(desc1, desc2)
 		bar_graph.append(len(matches))
-		print(angle , len(matches))
 		
 	plt.bar(np.arange(0, 370, 10), np.array(bar_graph))
 	plt.xlabel('Angle in Degrees')

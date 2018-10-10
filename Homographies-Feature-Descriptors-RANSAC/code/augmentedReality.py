@@ -67,7 +67,7 @@ def project_sphere():
 	#			  [0.,  1.,  640.],
 	#			  [0.,  0., 1.]]).astype('float')	
 				  		  
-	'''
+	
 	M = np.array([[1.,  0., 0., 5.75],
 				  [0.,  1., 0., 14.75],
 				  [0.,  0., 1., 0.],
@@ -79,7 +79,7 @@ def project_sphere():
 				  [0.,  0., 1., 0.],
 				  [0.,  0., 0., 1.],
 				  ]).astype('float')	
-
+	'''
 	H = planarH.computeH(X, W[:2, :])
 	R, t = compute_extrinsics(K, H)
 	sphere = getSphere()
