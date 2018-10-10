@@ -45,8 +45,13 @@ def project_extrinsics(K, W, R, t):
 	R_t[:, :3] = R
 	R_t[:, 3]  = t
 	proj_mat = np.dot(K, R_t)
-	Xout = cv2.perspectiveTransform(W.T.reshape(-1, 1 , 3), proj_mat).T
-	return Xout.squeeze(1)
+	Whomo = np.ones((4, W.shape[1]))
+	Whomo[:3, :] = W
+	
+	Xout = np.matmul(proj_mat, Whomo)
+	Xout /=Xout[2, :][None,:]
+	
+	return Xout[:2, :]
 def project_sphere():
 
 	W = np.array([[0., 18.2, 18.2, 0.],
@@ -58,31 +63,49 @@ def project_sphere():
 				  [0.0, 3043.72, 1604.00],
 				  [0.0, 0.0, 1.0]])
 				  
-	M = np.array([[1,   0., 300.],
-				  [0.,  1,  600],
-				  [0.,  0., 1.]]).astype('float')			  
-				  
+	#M = np.array([[1.,   0., 312.],
+	#			  [0.,  1.,  640.],
+	#			  [0.,  0., 1.]]).astype('float')	
+				  		  
+	'''
+	M = np.array([[1.,  0., 0., 5.75],
+				  [0.,  1., 0., 14.75],
+				  [0.,  0., 1., 0.],
+				  [0.,  0., 0., 1.],
+				  ]).astype('float')	
+	'''
+	M = np.array([[1.,  0., 0., 0.],
+				  [0.,  1., 0., 0.],
+				  [0.,  0., 1., 0.],
+				  [0.,  0., 0., 1.],
+				  ]).astype('float')	
+
 	H = planarH.computeH(X, W[:2, :])
 	R, t = compute_extrinsics(K, H)
 	sphere = getSphere()
-
+	sphereHomo = np.ones((4, sphere.shape[1]))
+	sphereHomo[:3, :] = sphere
+	shiftedSphereHomo = np.matmul(M, sphereHomo)
+	shiftedSphere = shiftedSphereHomo[:3, :]
+	
 	#plot actual sphere
 	#fig = plt.figure()
 	#ax = plt.axes(projection='3d')
 	#ax.scatter3D(sphere[0,:], sphere[1,:], sphere[2,:], c=sphere[2,:], cmap='Greens');
 	#plt.show()
 
-	projectedSphere = project_extrinsics(K, sphere, R, t)
-	projectedSphereH = np.ones((3, projectedSphere.shape[1]))
-	projectedSphereH[:2, :] = projectedSphere
+	projectedSphere = project_extrinsics(K, shiftedSphere, R, t)
+	#projectedSphereH = np.ones((3, projectedSphere.shape[1]))
+	#projectedSphereH[:2, :] = projectedSphere
 	
-	shiftedSphere = np.matmul(M, projectedSphereH)[:2, :]
-	N  = shiftedSphere.shape[1]
+	#shiftedSphere = np.matmul(M, projectedSphereH)[:2, :].astype('int')
+	
+	N  = projectedSphere.shape[1]
 	im = cv2.imread('../data/prince_book.jpeg')
 	plt.imshow(im, cmap='gray')
 	
 	for i in range(N):
-		plt.plot(shiftedSphere[0, i], shiftedSphere[1, i], 'yo')	
+		plt.scatter(projectedSphere[0, i], projectedSphere[1, i], 1.5,'yellow', 'o',  alpha=1.)	
 	plt.show()
 	
 	
