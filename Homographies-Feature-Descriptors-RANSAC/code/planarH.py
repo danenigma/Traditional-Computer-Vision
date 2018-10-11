@@ -76,7 +76,7 @@ def ransacH(matches, locs1, locs2, num_iter=5000, tol=2):
 		inliers_count = np.sum(dst<tol)
 
 		if inliers_count >  bestH_inlier_count:
-			print('new max: ', inliers_count)
+			#print('new max: ', inliers_count)
 			bestH_inlier_count = inliers_count
 			bestH = H
 			bestH_inliers = inliers

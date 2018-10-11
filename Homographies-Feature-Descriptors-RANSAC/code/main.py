@@ -2,15 +2,17 @@ import cv2
 import os
 import numpy as np
 import BRIEF
+import planarH
 import keypointDetect
 import panoramas
+import augmentedReality
 import matplotlib.pyplot as plt
 def test_keypoint():
 	levels = [-1,0,1,2,3,4]
 	im = cv2.imread('../data/model_chickenbroth.jpg')
 	#im = cv2.imread('../data/prince_book.jpeg')
 	locsDoG, gaussian_pyramid = keypointDetect.DoGdetector(im)
-
+	
 	N, _ = locsDoG.shape
 
 	print('N:', N)
@@ -32,44 +34,42 @@ def test_BRIEF():
 
 def test_panorama():
 
+	im1 = cv2.imread('../data/incline_L.png')
+	im2 = cv2.imread('../data/incline_R.png')
+	
 	H_file = '../results/q6_1.npy'
 	if os.path.isfile(H_file):
 		H2to1= np.load(H_file)
 	else:
 		print('RANSACing....')
-		locs1, desc1 = briefLite(im1)
-		locs2, desc2 = briefLite(im2)
-		matches = briefMatch(desc1, desc2)
-		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		locs1, desc1 = BRIEF.briefLite(im1)
+		locs2, desc2 = BRIEF.briefLite(im2)
+		matches = BRIEF.briefMatch(desc1, desc2)
+		H2to1 = planarH.ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
 		np.save('../results/q6_1.npy', H2to1)
 
-
-	im1 = cv2.imread('../data/incline_L.png')
-	im2 = cv2.imread('../data/incline_R.png')
-	im2_wraped = cv2.warpPerspective(im2, H2to1, (im1.shape[1] + 740, 
-												  im1.shape[0]))
-	
-	#im3 = imageStitching(im1, im2)
-	cv2.imwrite('../results/6_1.jpg', im2_wraped)
-	cv2.imshow('panoramas', im2_wraped)
+	im3 = panoramas.imageStitching(im1, im2, H2to1)
+	cv2.imwrite('../results/6_1.jpg', im3)
+	cv2.imshow('panoramas', im3)
 	cv2.waitKey(5000)
 	cv2.destroyAllWindows()
 def test_panorama_noclip():
 
+	im1 = cv2.imread('../data/incline_L.png')
+	im2 = cv2.imread('../data/incline_R.png')
+	
 	H_file = '../results/q6_1.npy'
 	if os.path.isfile(H_file):
 		H2to1= np.load(H_file)
 	else:
 		print('RANSACing....')
-		locs1, desc1 = briefLite(im1)
-		locs2, desc2 = briefLite(im2)
-		matches = briefMatch(desc1, desc2)
-		H2to1 = ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		locs1, desc1 = BRIEF.briefLite(im1)
+		locs2, desc2 = BRIEF.briefLite(im2)
+		matches = BRIEF.briefMatch(desc1, desc2)
+		H2to1 = planarH.ransacH(matches, locs1, locs2, num_iter=5000, tol=2)
+		print('dumping npy file...')
 		np.save('../results/q6_1.npy', H2to1)
 
-	im1 = cv2.imread('../data/incline_L.png')
-	im2 = cv2.imread('../data/incline_R.png')
-	
 	pano_im = panoramas.imageStitching_noClip(im1, im2, H2to1)
 	cv2.imwrite('../results/q6_2_pan.jpg', pano_im)
 	cv2.imshow('panoramas', pano_im)
@@ -86,12 +86,13 @@ def test_generate_panorama():
 	cv2.destroyAllWindows()
 
 def test_augmented_reality():
-	pass
+	augmentedReality.project_sphere()
+	
 
 if __name__ == '__main__':
 	#test_keypoint()
-	test_BRIEF()
+	#test_BRIEF()
 	#test_panorama()	
-	#test_panorama_noclip()	
+	test_panorama_noclip()	
 	#test_generate_panorama()
-
+	#test_augmented_reality()

@@ -4,7 +4,7 @@ import cv2
 import math
 import planarH
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
+#from mpl_toolkits import mplot3d
 
 def getSphere():
 
@@ -49,6 +49,7 @@ def project_extrinsics(K, W, R, t):
 	Whomo[:3, :] = W
 	
 	Xout = np.matmul(proj_mat, Whomo)
+	#normalize
 	Xout /=Xout[2, :][None,:]
 	
 	return Xout[:2, :]
@@ -62,24 +63,13 @@ def project_sphere():
 	K = np.array([[3043.72, 0.0, 1196.00],
 				  [0.0, 3043.72, 1604.00],
 				  [0.0, 0.0, 1.0]])
-				  
-	#M = np.array([[1.,   0., 312.],
-	#			  [0.,  1.,  640.],
-	#			  [0.,  0., 1.]]).astype('float')	
-				  		  
-	
+				  	
 	M = np.array([[1.,  0., 0., 5.75],
 				  [0.,  1., 0., 14.75],
 				  [0.,  0., 1., 0.],
 				  [0.,  0., 0., 1.],
 				  ]).astype('float')	
-	'''
-	M = np.array([[1.,  0., 0., 0.],
-				  [0.,  1., 0., 0.],
-				  [0.,  0., 1., 0.],
-				  [0.,  0., 0., 1.],
-				  ]).astype('float')	
-	'''
+
 	H = planarH.computeH(X, W[:2, :])
 	R, t = compute_extrinsics(K, H)
 	sphere = getSphere()
@@ -88,18 +78,8 @@ def project_sphere():
 	shiftedSphereHomo = np.matmul(M, sphereHomo)
 	shiftedSphere = shiftedSphereHomo[:3, :]
 	
-	#plot actual sphere
-	#fig = plt.figure()
-	#ax = plt.axes(projection='3d')
-	#ax.scatter3D(sphere[0,:], sphere[1,:], sphere[2,:], c=sphere[2,:], cmap='Greens');
-	#plt.show()
-
 	projectedSphere = project_extrinsics(K, shiftedSphere, R, t)
-	#projectedSphereH = np.ones((3, projectedSphere.shape[1]))
-	#projectedSphereH[:2, :] = projectedSphere
-	
-	#shiftedSphere = np.matmul(M, projectedSphereH)[:2, :].astype('int')
-	
+
 	N  = projectedSphere.shape[1]
 	im = cv2.imread('../data/prince_book.jpeg')
 	plt.imshow(im, cmap='gray')

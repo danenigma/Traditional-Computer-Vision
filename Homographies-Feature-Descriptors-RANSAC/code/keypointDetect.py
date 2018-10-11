@@ -35,9 +35,6 @@ def createDoGPyramid(gaussian_pyramid, levels=[-1,0,1,2,3,4]):
 		           created by differencing the Gaussian Pyramid input
 	'''
 	DoG_pyramid = []
-	################
-	# TO DO ...
-	# compute DoG_pyramid here
 	DoG_levels  = levels[1:]
 	DoG_pyramid = [gaussian_pyramid[:, :, i]-gaussian_pyramid[:, :, i-1] for i in range(1, len(levels))]
 	DoG_pyramid = np.stack(DoG_pyramid, axis=2)    
@@ -58,9 +55,6 @@ def computePrincipalCurvature(DoG_pyramid):
 		                  corresponding point in the DoG pyramid
 	'''
 	principal_curvature = None
-	##################
-	# TO DO ...
-	# Compute principal curvature here
 
 	H_XX  = cv2.Sobel(DoG_pyramid,cv2.CV_64F, 2, 0, ksize=3)
 	H_YY  = cv2.Sobel(DoG_pyramid,cv2.CV_64F, 0, 2, ksize=3)
@@ -93,9 +87,6 @@ def getLocalExtrema(DoG_pyramid, DoG_levels, principal_curvature,
 		locsDoG - N x 3 matrix where the DoG pyramid achieves a local extrema in both
 		       scale and space, and also satisfies the two thresholds.
 	'''
-	##############
-	#  TO DO ...
-	# Compute locsDoG here
 	footprint = np.zeros((3,3,3))
 	footprint[:, :, 1] = np.ones((3,3))
 	footprint[1, 1, :] = np.ones(3)
