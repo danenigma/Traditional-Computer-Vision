@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import animation
 import matplotlib.patches as patches
-
+from scipy.ndimage import correlate, convolve
 
 img = np.load('lena.npy')
 
@@ -19,7 +19,9 @@ dsize = np.array([pts[1, 3] - pts[1, 0] + 1,
 tmplt_pts = np.array([[0, dsize[1]-1, 0, dsize[1], -1],
                       [0, 0, dsize[0] - 1, dsize[0] - 1]])
 
-
+def getOptimalg(X, y, lamda):
+	S = np.matmul(X, X.T)
+	return np.matmul(np.linalg.inv(S + lamda*np.eye(S.shape[-1])), np.matmul(X, y))
 # apply warp p to template region of img
 def imwarp(p):
     global img, dsize
@@ -65,31 +67,71 @@ def init():
 
 
 def animate(i):
-    global X, Y, dp, gnd_p, sigma, all_patches, patch, cropax, all_patchax, N
+	global X, Y, dp, gnd_p, sigma, all_patches, patch, cropax, all_patchax, N
 
-    if i < N:  # If the animation is still running
-        xn = imwarp(dp[i, :] + gnd_p)
-        X[:, i] = xn.reshape(-1)
-        Y[i] = np.exp(-np.dot(dp[i, :], dp[i, :])/sigma)
-        all_patches[(i*dsize[0]):((i+1)*dsize[0]), :] = xn
-        cropax.set_data(xn)
-        all_patchax.set_data(all_patches.copy())
-        all_patchax.autoscale()
-        patch.set_xy(dp[i, :] + gnd_p)
-        return [cropax, patch, all_patchax]
-    else:  # Stuff to do after the animation ends
-        fig3d = plt.figure()
-        ax3d = fig3d.add_subplot(111, projection='3d')
-        ax3d.plot_surface(dpx.reshape(dsize), dpy.reshape(dsize),
-                          Y.reshape(dsize), cmap=plt.get_cmap('coolwarm'))
+	if i < N:  # If the animation is still running
+		xn = imwarp(dp[i, :] + gnd_p)
+		X[:, i] = xn.reshape(-1)
+		Y[i] = np.exp(-np.dot(dp[i, :], dp[i, :])/sigma)
+		all_patches[(i*dsize[0]):((i+1)*dsize[0]), :] = xn
+		cropax.set_data(xn)
+		all_patchax.set_data(all_patches.copy())
+		all_patchax.autoscale()
+		patch.set_xy(dp[i, :] + gnd_p)
+		return [cropax, patch, all_patchax]
+	else:  # Stuff to do after the animation ends
+		#fig3d = plt.figure()
+		#ax3d = fig3d.add_subplot(111, projection='3d')
+		#ax3d.plot_surface(dpx.reshape(dsize), dpy.reshape(dsize),
+		#                 Y.reshape(dsize), cmap=plt.get_cmap('coolwarm'))
 
-        # Place your solution code for question 4.3 here
-        plt.show()
-        return []
+		# Place your solution code for question 4.3 here
+		lamda = 0.
+		g = getOptimalg(X, Y, lamda)
+		print(g)
+		#plt.show()
+		return []
+
+def get_X_y():
+	global X, Y, dp, gnd_p, sigma, N
+	i = 0
+	while i < N:  # If the animation is still running
+		xn = imwarp(dp[i, :] + gnd_p)
+		X[:, i] = xn.reshape(-1)
+		Y[i] = np.exp(-np.dot(dp[i, :], dp[i, :])/sigma)
+		i += 1
+	return X, Y
 
 
 # Start the animation
-ani = animation.FuncAnimation(fig, animate, frames=N+1,
-                              init_func=init, blit=True,
-                              repeat=False, interval=10)
+#ani = animation.FuncAnimation(fig, animate, frames=N+1,
+#                              init_func=init, blit=True,
+#                              repeat=False, interval=10)
+#plt.show()
+X, y = get_X_y()
+lamda = 0.
+g = getOptimalg(X, Y, lamda).reshape(29, 45)
+fig1 = plt.figure()
+plt.imshow(g)
+plt.show()
+lamda = 1.
+g = getOptimalg(X, Y, lamda).reshape(29, 45)
+fig2 = plt.figure()
+plt.imshow(g)
+plt.show()
+corr_image = correlate(img, g)
+conv_image = convolve(img, g)
+conv_image_corrected = convolve(img, np.flipud(np.fliplr(g)))
+
+fig3 = plt.figure()
+plt.imshow(corr_image)
+plt.show()
+
+fig4 = plt.figure()
+plt.imshow(conv_image)
+plt.show()
+
+fig5 = plt.figure()
+plt.imshow(conv_image_corrected)
+
 plt.show()

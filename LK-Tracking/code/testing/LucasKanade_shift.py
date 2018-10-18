@@ -1,27 +1,29 @@
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy.ndimage import shift
+import matplotlib.pyplot as plt
+#my imports
+import cv2
 
-def LucasKanadeBasis(It, It1, rect, bases):
+def LucasKanade_shift(It, It1, rect, p0 = np.zeros(2)):
 	# Input: 
 	#	It: template image
 	#	It1: Current image
 	#	rect: Current position of the car
 	#	(top left, bot right coordinates)
-	#	bases: [n, m, k] where nxm is the size of the template.
+	#	p0: Initial movement vector [dp_x0, dp_y0]
 	# Output:
 	#	p: movement vector [dp_x, dp_y]
-
-    # Put your implementation here
-    	
+	# Put your implementation here
+	
 	threshold = 0.00001
-	p = np.zeros(2)
+	p = p0
 	
 	It = np.float32(It)/np.max(It)
 	It1 = np.float32(It1)/np.max(It1)
 	
 	
-	YY, XX = np.meshgrid(np.arange(rect[0], rect[2]+1), np.arange(rect[1],rect[3]+1))
+	YY, XX = np.meshgrid(np.arange(rect[0], rect[2]), np.arange(rect[1],rect[3]))
 	warp_jacobian = np.array([[1, 0],[0, 1]]).astype('float')
 
 	[It1_x, It1_y] = np.gradient(It1) 
@@ -39,16 +41,19 @@ def LucasKanadeBasis(It, It1, rect, bases):
 		
 		[It1_x_w_rect, It1_y_w_rect] = [It1_x_w[XX, YY], It1_y_w[XX, YY]]
 		
-		bases_mat = bases.reshape(-1, bases.shape[-1])
+		#cv2.imshow('template', 255*It_rect.astype('uint8'))
+		#cv2.imshow('warp', 255*It1_w_rect.astype('uint8'))
+		#cv2.imshow('xgrad', (255*It1_x_w_rect).astype('uint8'))
+		#cv2.imshow('ygrad', (255*It1_y_w_rect).astype('uint8'))
 		
-		A = np.stack([It1_x_w_rect.flatten(), It1_y_w_rect.flatten()], axis=1)
-		#print('del_I',del_I.shape, It_rect.shape)
+		#print('xgrad: ', It1_x_w_rect)
+		#if cv2.waitKey(5000) == ord('q'):break
+		
+		#np.gradient(It1_w_rect)
 		
 		b = (It1_w_rect - It_rect).flatten()
 		
-		W = np.matmul(bases_mat.T, A)
-		print(np.linalg.norm(np.matmul(bases_mat, W)))
-		A = A -  np.matmul(bases_mat, W)
+		A = np.matmul(np.stack((It1_x_w_rect.flatten(), It1_y_w_rect.flatten()), axis=1), warp_jacobian)
 		
 		H = np.matmul(A.T, A)
 		
@@ -63,4 +68,3 @@ def LucasKanadeBasis(It, It1, rect, bases):
 		if norm_del_p<threshold:
 			break
 	return -np.round(p)
-    
