@@ -108,30 +108,47 @@ def get_X_y():
 #                              init_func=init, blit=True,
 #                              repeat=False, interval=10)
 #plt.show()
+
+columns = 2
+rows = 1
+
 X, y = get_X_y()
+
 lamda = 0.
+
 g = getOptimalg(X, Y, lamda).reshape(29, 45)
-fig1 = plt.figure()
-plt.imshow(g)
-plt.show()
+fig1 = plt.figure(figsize=(2, 1))
+
+ax = fig1.add_subplot(rows, columns, 1)
+ax.imshow(g)
+ax.get_yaxis().set_visible(False)
+ax.get_xaxis().set_visible(False)
 lamda = 1.
 g = getOptimalg(X, Y, lamda).reshape(29, 45)
-fig2 = plt.figure()
-plt.imshow(g)
-plt.show()
+ax = fig1.add_subplot(rows, columns, 2)
+ax.imshow(g)
+ax.get_yaxis().set_visible(False)
+ax.get_xaxis().set_visible(False)
+columns = 3
+rows = 1
+
+fig2 = plt.figure(figsize=(3, 1))
 corr_image = correlate(img, g)
 conv_image = convolve(img, g)
 conv_image_corrected = convolve(img, np.flipud(np.fliplr(g)))
 
-fig3 = plt.figure()
-plt.imshow(corr_image)
+ax = fig2.add_subplot(rows, columns, 1)
+ax.imshow(corr_image)
+ax.get_yaxis().set_visible(False)
+ax.get_xaxis().set_visible(False)
+ax = fig2.add_subplot(rows, columns, 2)
+ax.imshow(conv_image)
+ax.get_yaxis().set_visible(False)
+ax.get_xaxis().set_visible(False)
+ax = fig2.add_subplot(rows, columns, 3)
+ax.imshow(conv_image_corrected)
+ax.get_yaxis().set_visible(False)
+ax.get_xaxis().set_visible(False)
 plt.show()
 
-fig4 = plt.figure()
-plt.imshow(conv_image)
-plt.show()
 
-fig5 = plt.figure()
-plt.imshow(conv_image_corrected)
-
-plt.show()

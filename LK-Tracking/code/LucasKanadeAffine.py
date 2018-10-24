@@ -60,11 +60,7 @@ def LucasKanadeAffine(It, It1):
 
 		norm_del_p = np.linalg.norm(del_p)
 	
-		print('norm_p: ', norm_del_p)
-		#print('M: ', M)
-		
 		if norm_del_p<threshold:
-			print('breaking .. ')
 			break
 
 	return M

@@ -39,6 +39,6 @@ def SubtractDominantMotion(image1, image2):
 	simple_mask = cv2.erode(simple_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)),iterations = 1)
 
 	#mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-	cv2.imshow('simple_mask', simple_mask)
+	#cv2.imshow('simple_mask', simple_mask)
 	
 	return mask
