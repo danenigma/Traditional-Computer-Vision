@@ -14,30 +14,38 @@ frames = np.load('../data/sylvseq.npy')
 bases = np.load('../data/sylvbases.npy')
 
 H, W, T = frames.shape
-sylvseqrects = np.zeros((T, 4))
-
-rect1 = np.array([101, 61, 155, 107]).astype('float').T
-rect2 = np.array([101, 61, 155, 107]).astype('float').T
+rect1 = np.array([101, 61, 155, 107]).T
+rect2 = np.array([101, 61, 155, 107]).T
 
 
 for i in range(1, T):
 	p1 = LucasKanadeBasis(frames[:, :, i-1], frames[:, :, i], rect1, bases)
 	p2 = LucasKanade(frames[:, :, i-1], frames[:, :, i], rect2)
-	rect1 += np.array([p1[1], p1[0], p1[1], p1[0]]).T	
-
-	sylvseqrects[i, :] = rect1
-	rect2 += np.array([p2[1], p2[0], p2[1], p2[0]]).T	
+	
 
 	print('frame: ', i)
+	rect1[0] = rect1[0] + p1[1]
+	rect1[1] = rect1[1] + p1[0]
+	rect1[2] = rect1[2] + p1[1]
+	rect1[3] = rect1[3] + p1[0]
+	
+	rect2[0] = rect2[0] + p2[1]
+	rect2[1] = rect2[1] + p2[0]
+	rect2[2] = rect2[2] + p2[1]
+	rect2[3] = rect2[3] + p2[0]
 	
 	frame = frames[:, :, i].copy()
 	cv2.rectangle(frame, (int(rect1[0]),int(rect1[1])), (int(rect1[2]),int(rect1[3])),(255), 1)
 	cv2.rectangle(frame, (int(rect2[0]),int(rect2[1])), (int(rect2[2]),int(rect2[3])),(0), 1)
 
-	cv2.imshow('input', frame)
+	#if i in [2, 100, 200, 300, 400]:
+	#	cv2.imwrite('frame_'+str(i) + '.jpg', frame.astype('uint8'))
 
+	#break
+	cv2.imshow('input', frame)
+	print('frame: ', i)
 	if cv2.waitKey(10) == ord('q'):
 		break
-np.save('sylvseqrects.npy', sylvseqrects)
+
 cv2.destroyAllWindows()
 

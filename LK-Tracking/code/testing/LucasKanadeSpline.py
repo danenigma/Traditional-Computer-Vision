@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 #my imports
 import cv2
 
-def LucasKanadeBasis(It, It1, rect, bases):
+def LucasKanadeSpline(It, It1, rect, p0 = np.zeros(2)):
 	# Input: 
 	#	It: template image
 	#	It1: Current image
@@ -17,7 +17,7 @@ def LucasKanadeBasis(It, It1, rect, bases):
 	# Put your implementation here
 
 	threshold = 0.0001
-	p = np.zeros(2).astype('float')
+	p = p0
 	
 	It  = np.float32(It)/np.max(It)
 	It1 = np.float32(It1)/np.max(It1)
@@ -35,44 +35,30 @@ def LucasKanadeBasis(It, It1, rect, bases):
 	It1_x_BiRect = RectBivariateSpline(x, y, It1_x)	
 	It1_y_BiRect = RectBivariateSpline(x, y, It1_y)	
 
-	[H_b, W_b, T] = bases.shape
-
-	y_range = np.linspace(rect[0], rect[2] + 1, W_b)
-	x_range = np.linspace(rect[1], rect[3] + 1, H_b)		
-	[Y, X] = np.meshgrid(y_range + p[1], x_range + p[0])
+	[Y, X] = np.meshgrid(np.arange(rect[0], rect[2]+1), np.arange(rect[1], rect[3]+1))
 						 	
 	template = It0_BiRect.ev(X, Y)
 
-	B = bases.reshape(-1, bases.shape[-1])
 
-	I = np.eye(B.shape[0])
-	
-	I_BBT = I - B @ B.T
-
-	
 	while True:	
+		
 
-		y_range = np.linspace(rect[0], rect[2] + 1, W_b)
-		x_range = np.linspace(rect[1], rect[3] + 1, H_b)		
-		[Y, X] = np.meshgrid(y_range + p[1], x_range + p[0])
-	
+		[Y, X] = np.meshgrid(np.arange(rect[0], rect[2]+1)+p[1], np.arange(rect[1], rect[3]+1)+p[0])
 	 	
 		It1_w_rect   = It1_BiRect.ev(X, Y)
 		It1_x_w_rect = It1_x_BiRect.ev(X, Y)
 		It1_y_w_rect = It1_y_BiRect.ev(X, Y)
-
+		
 		b = (template - It1_w_rect).flatten()
+
+
 		A = np.stack((It1_x_w_rect.flatten(), It1_y_w_rect.flatten()), axis=1)
+		H = np.matmul(A.T, A)
 
-		A_star = I_BBT @ A
-
-		b_star = I_BBT @ b 
-
-		H = np.matmul(A_star.T, A_star)
-
-		del_p = np.linalg.inv(H) @ (A_star.T @ b_star)
+		del_p = np.linalg.inv(H) @ (A.T @ b)
 		p = p + del_p
 		norm_del_p = np.linalg.norm(del_p)
+
 		if norm_del_p<threshold:
 			break
 

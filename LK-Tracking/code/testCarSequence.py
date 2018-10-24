@@ -8,34 +8,35 @@ import cv2
 from LucasKanade import LucasKanade
 
 
+
+
 # write your script here, we recommend the above libraries for making your animation
 frames = np.load('../data/carseq.npy')
 
 H, W, T = frames.shape
-rect = np.array([59, 116, 145, 151]).T
+rect = np.array([59, 116, 145, 151]).astype('float').T
 p0 =  np.zeros(2)
+carseqrects = np.zeros((T, 4))
+carseqrects[0, :] = rect
+ 
 
 for i in range(1, T):
 
 	p = LucasKanade(frames[:, :, i-1], frames[:, :, i], rect, p0=p0)
 	frame = frames[:, :, i].copy()
-	print('p: ', p)
-	rect[0] = rect[0] + p[1]
-	rect[1] = rect[1] + p[0]
-	rect[2] = rect[2] + p[1]
-	rect[3] = rect[3] + p[0]
-	print('rect: ', rect)
-	
+	rect += np.array([p[1], p[0], p[1], p[0]]).T
 
-	cv2.rectangle(frame, (int(rect[0]),int(rect[1])), (int(rect[2]),int(rect[3])),(0, 0, 255), 3)
+	carseqrects[i, :] = rect
+	
+	
+	cv2.rectangle(frame, (int(rect[0]),int(rect[1])), (int(rect[2]),int(rect[3])),(255), 1)
 	if i in [2, 100, 200, 300, 400]:
 		cv2.imwrite('frame_'+str(i) + '.jpg', frame.astype('uint8'))
 
-	#break
 	cv2.imshow('input', frame)
 	print('frame: ', i)
 	if cv2.waitKey(10) == ord('q'):
 		break
-
+np.save('carseqrects.npy', carseqrects)
 cv2.destroyAllWindows()
 

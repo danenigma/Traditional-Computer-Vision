@@ -12,7 +12,7 @@ def LucasKanadeAffine(It, It1):
 	# put your implementation here
 	M = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-	threshold = 0.5
+	threshold = 0.01
 
 	p = np.array([0.,0.,0.,0.,0.,0.]).T
 
@@ -26,7 +26,9 @@ def LucasKanadeAffine(It, It1):
 
 	while True:	
 		
-
+		M = np.array([[p[0]+1, p[1], p[2]],
+					  [p[3], p[4]+1, p[5]]])
+		
 		It1_w   = affine_transform(It1,  M[:2,:2], offset =[M[0, 2], M[1, 2]], cval=-1)
 		It1_x_w = affine_transform(It1_x,M[:2,:2], offset =[M[0, 2], M[1, 2]], cval=-1)
 		It1_y_w = affine_transform(It1_y,M[:2,:2], offset =[M[0, 2], M[1, 2]], cval=-1)
@@ -40,8 +42,8 @@ def LucasKanadeAffine(It, It1):
 	
 
 	
-		b = It1_w_rect - It_rect
-	
+		#b = It1_w_rect - It_rect
+		b =  It_rect - It1_w_rect	
 		A = np.stack((It1_x_w_rect*x,
 					  It1_x_w_rect*y,
 					  It1_x_w_rect, 
@@ -53,13 +55,9 @@ def LucasKanadeAffine(It, It1):
 	
 		del_p = np.linalg.lstsq(H, np.matmul(A.T, b), rcond=-1)[0]
 	
+		#p = p - del_p
 		p = p + del_p
-		M[0, 0] = p[0]+1
-		M[0, 1] = p[1]
-		M[0, 2] = p[2]
-		M[1, 0] = p[3]
-		M[1, 1] = p[4]+1
-		M[1, 2] = p[5]
+
 		norm_del_p = np.linalg.norm(del_p)
 	
 		print('norm_p: ', norm_del_p)
