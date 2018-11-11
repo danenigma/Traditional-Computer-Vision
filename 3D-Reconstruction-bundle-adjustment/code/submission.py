@@ -17,6 +17,8 @@ Q2.1: Eight Point Algorithm
             M, a scalar parameter computed as max (imwidth, imheight)
     Output: F, the fundamental matrix
 '''
+
+
 def eightpoint(pts1, pts2, M):
 	# Replace pass by your implementation
 	T = np.eye(3) / M
@@ -153,36 +155,6 @@ Q4.1: 3D visualization of the temple images.
             y2, y-coordinates of the pixel on im2
 
 '''
-def epipolarCorrespondenceOld(im1, im2, F, x1, y1):
-
-	H, W = im2.shape[:2]
-	X = np.arange(W)
-
-	P1 = np.array([x1, y1, 1]).astype('float').T
-	epline = F.dot(P1)
-	#y = ax + b
-	aEpline = -epline[0]/epline[1]
-	bEpline = -epline[2]/epline[1]
-	Y = aEpline*X + bEpline - H
-	valid_y = np.logical_and(Y > 0, Y < H)
-	X = X[valid_y]
-	Y = np.round(Y[valid_y]).astype('int')
-	S = 7
-	patch1 = getPatch(im1, x1, y1, S)
-	
-	x2, y2 = None, None
-	 
-	min_dist = np.inf
-	
-	for j, i in zip(X, Y):
-		patch2 = getPatch(im2, i, j, S)
-		dist = np.linalg.norm(patch1-patch2)
-		if dist <  min_dist :
-			min_dist  = dist 
-			[x2, y2] = j, i
-			print('I2: ', [x2, y2])
-			
-	return x2, y2
 	
 def epipolarCorrespondence(im1, im2, F, x1, y1):
 
@@ -198,44 +170,41 @@ def epipolarCorrespondence(im1, im2, F, x1, y1):
 	if l[0] != 0:
 		ye = sy-1;
 		ys = 0
-		xe = -(l[1] * ye + l[2])/l[0]
-		xs = -(l[1] * ys + l[2])/l[0]	
-		X = np.arange(np.round(min(xs,xe)), np.round(max(xs,xe)))
-		Y = np.round(-(l[0]*X + l[2])/l[1])
+
+		Y = np.arange(np.ceil(min(ys,ye)), np.ceil(max(ys,ye)))		
+		X = np.round(-(l[1]*Y + l[2])/l[0])
+		
 				
 	else:
 		xe = sx-1
 		xs = 0
-		ye = -(l[0] * xe + l[2])/l[1]
-		ys = -(l[0] * xs + l[2])/l[1]
-		Y = np.arange(np.round(min(ys,ye)), np.round(max(ys,ye)))
-		Y = np.round(-(l[1]*Y + l[2])/l[0])
-	
-	X = X.astype('int')
-	Y = Y.astype('int')	
-	print('X: ', X)
-	print('Y: ', Y)
-	
-	S = 9
-	patch1 = getPatch(im1, y1, x1, S)
-	cv2.imshow('patch1', patch1)
-	x2, y2 = None, None
-	 
-	min_dist = np.inf
+		
+		X = np.arange(np.ceil(min(xs,xe)), np.ceil(max(xs,xe)))		
+		Y = np.round(-(l[0]*X + l[2])/l[1])
 
-	for j, i in zip(X, Y):
-		patch2 = getPatch(im2, i, j, S)		
+	X = np.round(X).astype('int')
+	Y = np.round(Y).astype('int')
+
+	
+	S = 15
+	patch1 = getPatch(im1, y1, x1, S)
+	x2, y2 = None, None	 
+	min_dist = np.inf
+	g_kernel = gaussian(S, 9)
+	g_kernel_3d = np.repeat(g_kernel[:, :, np.newaxis], 3, axis=2)
+
+	for i, j in zip(X, Y):
+		patch2 = getPatch(im2, j, i, S)		
 		if patch2 is None:continue
-		dist = np.linalg.norm(patch1-patch2)
+		dist = np.linalg.norm(g_kernel_3d*(patch1-patch2))
 		if dist <  min_dist :
 			min_dist = dist 
-			[x2, y2] = j, i
-			print('I2: ', [x2, y2])
-			cv2.imshow('patch2', patch2)
+			[x2, y2] = i, j
+
+
 	patch2 = getPatch(im2, y2, x2, S)
 	
-	cv2.waitKey(5000)
-		
+			
 	return x2, y2
 
 def getPatch(im, x, y, S):
@@ -245,7 +214,12 @@ def getPatch(im, x, y, S):
 		return im[x-S//2:x+S//2+1, y-S//2:y+S//2+1, :]
 	else:#if not valid patch
 		return None	
-	
+def gaussian(size, sigma):
+	X = np.linspace(-size//2 + 1, size//2 + 1, size)
+	Y = np.linspace(-size//2 + 1, size//2 + 1, size)
+	XX, YY = np.meshgrid(X, Y)
+	g = np.exp(-((XX**2 + YY**2)/(2.0*sigma**2)))
+	return g/np.sum(g)	
 
 '''
 Q5.1: RANSAC method.
@@ -258,12 +232,11 @@ def ransacF(pts1, pts2, M):
     # Replace pass by your implementation
 
 	p = pts1.shape[0]
-	print('p: ', p)
 	bestF = None
 	bestF_inlier_count = 0
 	bestF_inliers = None
 	tol = 0.001
-	num_iter = 100
+	num_iter = 5000
 	pts1_h = np.hstack((pts1, np.ones((p, 1))))
 	pts2_h = np.hstack((pts2, np.ones((p, 1))))
 	
@@ -281,12 +254,12 @@ def ransacF(pts1, pts2, M):
 				bestF_inlier_count = inliers_count
 				bestF_inliers = inliers
 				bestF = F
-				print('#'*100)	
-				print('percentage of inliers: ', bestF_inlier_count/p, bestF_inlier_count)	
-				print('#'*100)
+		print('#'*100)	
+		print('iter: ', iter, ' inliers: ', int(100*inliers_count/p),'/', int(100*bestF_inlier_count/p))	
+		print('#'*100)
 		if (bestF_inlier_count/p) >=.75:
 			break
-	'''
+
 	bestFs = sevenpoint(pts1[bestF_inliers, :2], pts2[bestF_inliers, :2], M)
 	
 	for F in bestFs:
@@ -302,7 +275,7 @@ def ransacF(pts1, pts2, M):
 			bestF_inliers = inliers
 	
 	bestF = helper.refineF(bestF, pts1[bestF_inliers, :2], pts2[bestF_inliers, :2])		
-	'''	
+		
 	
 	return bestF, np.where(bestF_inliers)
 
@@ -314,20 +287,25 @@ Q5.2: Rodrigues formula.
 '''
 def rodrigues(r):
 	# Replace pass by your implementation
-	a1, a2, a3 = r[0], r[1], r[2]
-	 
-	rx = np.array([[0,  -a3, a2],
-				   [a3,  0, -a1],
-				   [-a2, a1, 0]])
+	
+	return cv2.Rodrigues(r.astype('float'))[0]
 	th  = np.linalg.norm(r)
 
-	r_n = np.linalg.norm(r)
-	if r_n == 0:
+
+	if th == 0:
 		return np.eye(3)
-	r = r/r_n
 
-	R = np.eye(3) + np.sin(th)*rx + (1 - np.cos(th) )*(r @ r.T - np.eye(3))
-
+	u = r/th
+	
+	a1, a2, a3 = u[0], u[1], u[2]
+	 
+	u_x = np.array([[0,  -a3, a2],
+				   [a3,  0, -a1],
+				   [-a2, a1, 0]])
+				   
+	#R = np.eye(3) + np.sin(th)*rx + (1 - np.cos(th) )*(r_n @ r_n.T - np.eye(3))
+	R = np.eye(3)*np.cos(th) + (1 - np.cos(th))*(u @ u.T) + np.sin(th)*u_x 
+	
 	return R
 
 '''
@@ -339,13 +317,26 @@ def invRodrigues(R):
 	#https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation
 
 	th = np.arccos((np.trace(R) - 1)/2)
-
-	if th == 0:
-		return np.zeros(3).reshape(-1, 1)
+	return cv2.Rodrigues(R.astype('float'))[0].reshape(-1)
+	if th == 0 or np.isnan(th):
+		return np.zeros(3).reshape(-1, 1), cv2.Rodrigues(R.astype('float'))[0]
 	else:
+		'''
 		r = (1/(2*np.sin(th)))*np.array([R[2, 1] - R[1, 2],
 			 							 R[0, 2] - R[2, 0],
-			 							 R[1, 0] - R[0, 1]]).T			 							 
+		 								 R[1, 0] - R[0, 1]]).T			 		
+		'''
+		A = (R - R.T)/2
+		a32, a13, a21 = A[2,1], A[0,2], A[1,0]
+		
+		rho = np.array([a32, a13, a21]).T
+		s  = np.linalg.norm(rho)
+		c  = (np.trace(R) - 1)/2
+		u  = rho/s
+		th = np.arctan2(s, c)
+		r  = u*th
+		
+				 
 	return r
 	   
 
@@ -404,9 +395,16 @@ def bundleAdjustment(K1, M1, p1, K2, M2_init, p2, P_init):
 	t2 = M2_init[:, 3]
 	r2 = invRodrigues(R2)
 	#x_init = np.concatenate((P_init.reshape(-1, 1), r2, t2), axis=0)
+	print('M2 init: ', M2_init)
+	print('R2: ', R2)
+	print('t2: ', t2)
+	print('r2: ', r2)
+	
 	x_init = np.concatenate([P_init.reshape([-1]), r2, t2])
 	
 	rod_func  = lambda x: rodriguesResidual(K1, M1, p1, K2, p2, x)
+	
+	
 	
 	x_star, flag = leastsq(rod_func, x_init)
 	

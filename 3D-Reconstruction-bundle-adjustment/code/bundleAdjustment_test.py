@@ -21,4 +21,6 @@ fig1 = plt.figure()
 ax = fig1.add_subplot(111, projection='3d')
 ax.scatter(P_init[:, 0], P_init[:, 1], P_init[:, 2], c='b', marker='o')
 
+
+
 plt.show()
