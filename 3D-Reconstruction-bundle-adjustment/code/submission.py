@@ -286,8 +286,8 @@ Q5.2: Rodrigues formula.
 '''
 def rodrigues(r):
 	# Replace pass by your implementation
-	
-	return cv2.Rodrigues(r.astype('float'))[0]
+	r = r.reshape(3, 1)	
+	#return cv2.Rodrigues(r.astype('float'))[0]
 	th  = np.linalg.norm(r)
 
 
@@ -316,7 +316,7 @@ def invRodrigues(R):
 	#https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation
 
 	th = np.arccos((np.trace(R) - 1)/2)
-	return cv2.Rodrigues(R.astype('float'))[0].reshape(-1)
+	#return cv2.Rodrigues(R.astype('float'))[0].reshape(-1)
 	if th == 0 or np.isnan(th):
 		return np.zeros(3).reshape(-1, 1), cv2.Rodrigues(R.astype('float'))[0]
 	else:
