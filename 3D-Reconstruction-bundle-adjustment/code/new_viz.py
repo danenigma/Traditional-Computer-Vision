@@ -26,12 +26,10 @@ intrinsics = np.load('../data/intrinsics.npz')
 K1 =  intrinsics['K1']
 K2 =  intrinsics['K2']
 
-cameraMats = np.load('q3_3.npz')
 
 M1 = np.vstack((np.eye(3), np.zeros(3))).T
 C1 = K1 @ M1
-C2 = cameraMats['C2']
-M2_init = cameraMats['M2']
+
 X2 = []
 Y2 = []
 
@@ -42,31 +40,50 @@ for x1, y1 in zip(X1, Y1):
 	Y2.append(y2)
 	
 X2, Y2 = np.array(X2), np.array(Y2)
+
+
 p1 = np.hstack((X1.reshape(-1, 1), Y1.reshape(-1, 1)))
 p2 = np.hstack((X2.reshape(-1, 1), Y2.reshape(-1, 1)))
+E = sub.essentialMatrix(F8, K1, K2)
+M2s = helper.camera2(E)
+best_valid_pts = 0
 
-P, error =  sub.triangulate(C1, p1, C2, p2)
-print('reprojection error before bundle: ', error, error/p1.shape[0])
-print(X2)
-print(P.shape)
+P_best = None
+M2 = None
+for i in range(4):
+
+	C2 = K2 @ M2s[:, :, i]
+	P, error = sub.triangulate(C1, p1, C2, p2)
+	valid_pts = np.sum(P[:, 2] > 0)
+	print('valid_pts: ', valid_pts)
+	
+	if valid_pts > best_valid_pts:
+		print('found new M2')
+		best_valid_pts = valid_pts 	
+		P_best = P
+		M2 = M2s[:, :, i]
+print(M2)			
 fig1 = plt.figure()
 ax = fig1.add_subplot(111, projection='3d')
-ax.scatter(P[:, 0], P[:, 1], P[:, 2], c='b', marker='o', s=1)
-'''
-print('Running bundle adjustment ....')
-M2, P_star = sub.bundleAdjustment(K1, M1, p1, K1, M1, p1, P)
-C2_star = K2 @ M2 
+ax.scatter(P_best[:, 0], P_best[:, 1], P_best[:, 2], c='b', marker='o', s = 1)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+plt.show()		
 
-print('M2 init: ', M2_init)
-print('M2: ', M2)
+C2 = K2 @ M2
+P, error = sub.triangulate(C1, p1, C2, p2)
+print('before bundle: ', error)
+print('Running bundle adjustment ....')
+M2, P_star = sub.bundleAdjustment(K1, M1, p1, K2, M2, p2, P_best)
 print('bundle adjustment done ....')
+C2 = K2 @ M2
+P, error = sub.triangulate(C1, p1, C2, p2)
+print('after bundle: ', error)
 fig2 = plt.figure()
 ax = fig2.add_subplot(111, projection='3d')
-ax.scatter(P_star[:, 0], P_star[:, 1], P_star[:, 2], c='g', marker='o')
+ax.scatter(P_star[:, 0], P_star[:, 1], P_star[:, 2], c='g', marker='o', s=1)
 
-P, error =  sub.triangulate(C1, p1, C2_star, p2)
-print('reprojection error after bundle: ', error)
-'''
 plt.show()
 
 

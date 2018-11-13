@@ -13,6 +13,5 @@ N = data['pts1'].shape[0]
 M = 640
 
 F8 = sub.eightpoint(data['pts1'], data['pts2'], M)
-
-helper.epipolarMatchGUI(im1, im2, F8)
+print('F8: ', F8, )
 

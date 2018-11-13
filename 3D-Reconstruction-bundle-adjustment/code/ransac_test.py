@@ -45,7 +45,7 @@ for F in bestFs:
 		bestF_inliers = inliers
 
 bestF = helper.refineF(bestF, pts1[bestF_inliers, :], pts2[bestF_inliers, :])
-	
+
 helper.displayEpipolarF(im1, im2, bestF)
 
 

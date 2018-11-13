@@ -7,7 +7,7 @@ import helper
 # Insert your package here
 from sympy import *
 from scipy.ndimage.filters import gaussian_filter
-from scipy.optimize import leastsq
+from scipy.optimize import leastsq, minimize
 import cv2
 
 '''
@@ -137,8 +137,8 @@ def triangulate(C1, pts1, C2, pts2):
 		
 		p1_reproj = p1_reproj/p1_reproj[-1]
 		p2_reproj = p2_reproj/p2_reproj[-1]
-		
-		error += np.linalg.norm(p1_reproj[:2]- pt1)**2 + np.linalg.norm(p2_reproj[:2]- pt2)**2		
+		#print(w[2]) #p1_reproj[:2], pt1, p1_reproj[:2]- pt1) #np.linalg.norm(p1_reproj[:2]- pt1)**2)
+		error += (np.linalg.norm(p1_reproj[:2]- pt1)**2 + np.linalg.norm(p2_reproj[:2]- pt2)**2)		
 		P.append(w[:3])
 		
 	P = np.vstack(P)
@@ -190,7 +190,7 @@ def epipolarCorrespondence(im1, im2, F, x1, y1):
 	patch1 = getPatch(im1, y1, x1, S)
 	x2, y2 = None, None	 
 	min_dist = np.inf
-	g_kernel = gaussian(S, 9)
+	g_kernel = gaussian(S, 15)
 	g_kernel_3d = np.repeat(g_kernel[:, :, np.newaxis], 3, axis=2)
 
 	for i, j in zip(X, Y):
@@ -202,8 +202,7 @@ def epipolarCorrespondence(im1, im2, F, x1, y1):
 			[x2, y2] = i, j
 
 
-	patch2 = getPatch(im2, y2, x2, S)
-	
+
 			
 	return x2, y2
 
@@ -394,20 +393,14 @@ def bundleAdjustment(K1, M1, p1, K2, M2_init, p2, P_init):
 	R2 = M2_init[:, :3]
 	t2 = M2_init[:, 3]
 	r2 = invRodrigues(R2)
-	#x_init = np.concatenate((P_init.reshape(-1, 1), r2, t2), axis=0)
-	print('M2 init: ', M2_init)
-	print('R2: ', R2)
-	print('t2: ', t2)
-	print('r2: ', r2)
 	
 	x_init = np.concatenate([P_init.reshape([-1]), r2, t2])
-	
-	rod_func  = lambda x: rodriguesResidual(K1, M1, p1, K2, p2, x)
-	
-	
-	
-	x_star, flag = leastsq(rod_func, x_init)
-	
+	rod_func  = lambda x: (rodriguesResidual(K1,M1,p1,K2,p2,x)**2).sum()
+	#rod_func  = lambda x: rodriguesResidual(K1, M1, p1, K2, p2, x)
+
+	#x_star, flag = leastsq(rod_func, x_init)
+	res = minimize(rod_func, x_init)
+	x_star = res.x
 	P_star  = x_star[:-6].reshape(N, 3)
 	r2_star = x_star[-6:-3]
 	R2_star = rodrigues(r2_star)

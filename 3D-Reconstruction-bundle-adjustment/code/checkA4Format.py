@@ -17,6 +17,7 @@ im2 = plt.imread('../data/im2.png')
 
 N = data['pts1'].shape[0]
 M = 640
+
 '''
 # 2.1
 F8 = sub.eightpoint(noise_data['pts1'], noise_data['pts2'], M)
@@ -59,12 +60,12 @@ C2 = np.concatenate([np.random.rand(3, 3), np.ones([3, 1])], axis=1)
 P, err = sub.triangulate(C1, data['pts1'], C2, data['pts2']);
 assert P.shape == (N, 3), 'triangulate returns Nx3 matrix P'
 assert np.isscalar(err), 'triangulate returns scalar err'
-
+'''
 # 4.1
 x2, y2 = sub.epipolarCorrespondence(im1, im2, F8, data['pts1'][0, 0], data['pts1'][0, 1])
 assert np.isscalar(x2) & np.isscalar(y2), 'epipolarCoorespondence returns x & y coordinates'
 helper.epipolarMatchGUI(im1, im2, F8)
-
+'''
 # 5.1
 
 
@@ -73,7 +74,7 @@ assert F.shape == (3, 3), 'ransacF returns 3x3 matrix'
 print('It was noisy')
 helper.displayEpipolarF(im1, im2, F)
 
-'''
+
 # 5.2
 
 r =np.ones([3, 1])
@@ -86,7 +87,7 @@ R = np.eye(3)
 r = sub.invRodrigues(R)
 print('r: ', r)
 assert (r.shape == (3, )) | (r.shape == (3, 1)), 'invRodrigues returns 3x1 vector'
-'''
+
 # 5.3
 
 #P  = np.random.randint(0, 25, (N, 3))
