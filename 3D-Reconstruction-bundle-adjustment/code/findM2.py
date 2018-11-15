@@ -22,14 +22,13 @@ scale = 640
 
 F = sub.eightpoint(pts1, pts1, scale)
 E = sub.essentialMatrix(F, K1, K2)
+print('E: ', E)
 M1 = np.vstack((np.eye(3), np.zeros(3))).T
 M2s = helper.camera2(E)
 
 C1 = K1 @ M1
 
 best_M2 = None
-P_best  = None
-C2_best = None
 best_valid = 0
 
 for i in range(M2s.shape[2]):
@@ -38,25 +37,24 @@ for i in range(M2s.shape[2]):
 	P, error = sub.triangulate(C1, pts1, C2, pts2)	
 	valid_pts = np.sum(P[:, 2] > 0)
 	print('valid_pts: ', valid_pts, error)
-	fig1 = plt.figure()
-	ax = fig1.add_subplot(111, projection='3d')
-	ax.scatter(P[:, 0], P[:, 1], P[:, 2], c='b', marker='o', s = 1)
-	plt.show()	
 	if valid_pts > best_valid:
 		
 		best_M2 = M2s[:, :, i]
 		best_error = error
 		best_valid = valid_pts
-		P_best  = P
-		C2_best = C2
 		print('new best found', i) 
 			
-
-fig1 = plt.figure()
-ax = fig1.add_subplot(111, projection='3d')
-ax.scatter(P_best[:, 0], P_best[:, 1], P_best[:, 2], c='b', marker='o', s = 1)
-plt.show()		
+C2_best = K2 @ best_M2
+	
+P_best, error = sub.triangulate(C1, pts1, C2_best, pts2)	
 
 np.savez('q3_3.npz',M2=best_M2, C2=C2_best, P=P_best)
-print('Find M2 dumping done !!')
+
+#fig1 = plt.figure()
+#ax = fig1.add_subplot(111, projection='3d')
+#ax.scatter(P_best[:, 0], P_best[:, 1], P_best[:, 2], c='b', marker='o', s = 1)
+#plt.show()		
+
+
+#print('Find M2 dumping done !!')
 

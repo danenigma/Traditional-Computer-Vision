@@ -92,69 +92,21 @@ C2 = K2 @ M2
 P, error = sub.triangulate(C1, pts1, C2, pts2)
 print('before bundle: ', error)
 print('Running bundle adjustment ....')
-print('M2 before: ', M2)
 M2, P_star = sub.bundleAdjustment(K1, M1, pts1, K2, M2, pts2, P_best)
 print('bundle adjustment done ....')
-print('M2 after: ', M2)
 C2 = K2 @ M2
 P, error = sub.triangulate(C1, pts1, C2, pts2)
 print('after bundle: ', error)
 fig2 = plt.figure()
 ax = fig2.add_subplot(111, projection='3d')
-ax.scatter(P_star[:, 0], P_star[:, 1], P_star[:, 2], c='g', marker='o', s=1)
-ax.scatter(P_best[:, 0], P_best[:, 1], P_best[:, 2], c='b', marker='o', s = 1)
+ax.scatter(P_star[:, 0], P_star[:, 1], P_star[:, 2], c='g', marker='o')
+ax.scatter(P_best[:, 0], P_best[:, 1], P_best[:, 2], c='r', marker='o')
 
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 
 plt.show()
-
-'''	
-#p1_data = np.load('../data/templeCoords.npz')
-
-X1, Y1 = pts1[:, 0].reshape(-1, 1), pts1[:, 1].reshape(-1, 1)#p1_data['x1'], p1_data['y1']
-X2 = []
-Y2 = []
-print('bestF: ', bestF)
-print('X1: ', X1)
-for x1, y1 in zip(X1, Y1):
-	[x2, y2] = sub.epipolarCorrespondence(im1, im2, bestF, x1[0], y1[0])
-	X2.append(x2)
-	Y2.append(y2)
-
-X2, Y2 = np.array(X2), np.array(Y2)
-p1 = np.hstack((X1.reshape(-1, 1), Y1.reshape(-1, 1)))
-p2 = np.hstack((X2.reshape(-1, 1), Y2.reshape(-1, 1)))
-P, error =  sub.triangulate(C1, p1, C2_best, p2)
-
-print('reprojection error before bundle: ', error)
-
-fig1 = plt.figure()
-ax = fig1.add_subplot(111, projection='3d')
-ax.scatter(P[:, 0], P[:, 1], P[:, 2], c='b', marker='o')
-
-print('bundle adjustment running....')
-M2, P_star = sub.bundleAdjustment(K1, M1, p1, K2, best_M2, p2, P)
-
-print('Fstar: ', M2[:, :3])
-print('P stat: ', np.max(P_star), np.min(P_star), np.median(P_star))
-#P_star[np.abs(P_star)>1] = 0
-
-print('bundle adjustment done ....')
-
-fig2 = plt.figure()
-ax = fig2.add_subplot(111, projection='3d')
-
-ax.scatter(P_star[:, 0], P_star[:, 1], P_star[:, 2], c='g', marker='o')
-C2_star = K2 @ M2 
-
-P, error =  sub.triangulate(C1, p1, C2_star, p2)
-print('reprojection error after bundle: ', error)
-
-plt.show()
-
-'''
 
 
 

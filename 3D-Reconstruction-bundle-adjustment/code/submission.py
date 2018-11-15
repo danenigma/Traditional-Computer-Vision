@@ -8,7 +8,7 @@ import helper
 from sympy import *
 from scipy.ndimage.filters import gaussian_filter
 from scipy.optimize import leastsq, minimize
-import cv2
+
 
 '''
 Q2.1: Eight Point Algorithm
@@ -51,12 +51,7 @@ Q2.2: Seven Point Algorithm
     Output: Farray, a list of estimated fundamental matrix.
 '''
 def sevenpoint(pts1, pts2, M):
-    # Replace pass by your implementation
-	#fun = lambda a: np.linalg.det(a * F1 + (1 - a) * F2)
-	#a0=fun(0)
-	#a1=(fun(1)−fun(−1))/3−(fun(2)−fun(−2))/12
-	#a2=0.5fun(1)+0.5fun(−1)−fun(0)
-	#a0+a1x+a2x2+a3x3=fun(x)
+   
 	T = np.eye(3) / M
 	T[2, 2] = 1;
 	pts1 = pts1.astype('float')/M
@@ -99,10 +94,8 @@ Q3.1: Compute the essential matrix E.
     Output: E, the essential matrix
 '''
 def essentialMatrix(F, K1, K2):
-    # Replace pass by your implementation
-    return K2.T @ F @ K1 
-    #pass
-
+	return K2.T @ F @ K1 
+   
 
 '''
 Q3.2: Triangulate a set of 2D coordinates in the image to a set of 3D points.
@@ -114,7 +107,6 @@ Q3.2: Triangulate a set of 2D coordinates in the image to a set of 3D points.
             err, the reprojection error.
 '''
 def triangulate(C1, pts1, C2, pts2):
-    # Replace pass by your implementation
     
 	P = []
 
@@ -137,7 +129,6 @@ def triangulate(C1, pts1, C2, pts2):
 		
 		p1_reproj = p1_reproj/p1_reproj[-1]
 		p2_reproj = p2_reproj/p2_reproj[-1]
-		#print(w[2]) #p1_reproj[:2], pt1, p1_reproj[:2]- pt1) #np.linalg.norm(p1_reproj[:2]- pt1)**2)
 		error += (np.linalg.norm(p1_reproj[:2]- pt1)**2 + np.linalg.norm(p2_reproj[:2]- pt2)**2)		
 		P.append(w[:3])
 		
@@ -200,9 +191,6 @@ def epipolarCorrespondence(im1, im2, F, x1, y1):
 		if dist <  min_dist :
 			min_dist = dist 
 			[x2, y2] = i, j
-
-
-
 			
 	return x2, y2
 
@@ -213,6 +201,7 @@ def getPatch(im, x, y, S):
 		return im[x-S//2:x+S//2+1, y-S//2:y+S//2+1, :]
 	else:#if not valid patch
 		return None	
+
 def gaussian(size, sigma):
 	X = np.linspace(-size//2 + 1, size//2 + 1, size)
 	Y = np.linspace(-size//2 + 1, size//2 + 1, size)
@@ -228,14 +217,13 @@ Q5.1: RANSAC method.
     Output: F, the fundamental matrix
 '''
 def ransacF(pts1, pts2, M):
-    # Replace pass by your implementation
 
 	p = pts1.shape[0]
 	bestF = None
 	bestF_inlier_count = 0
 	bestF_inliers = None
-	tol = 0.001
-	num_iter = 5000
+	tol = 0.0022
+	num_iter = 100
 	pts1_h = np.hstack((pts1, np.ones((p, 1))))
 	pts2_h = np.hstack((pts2, np.ones((p, 1))))
 	
@@ -313,18 +301,11 @@ Q5.2: Inverse Rodrigues formula.
     Output: r, a 3x1 vector
 '''
 def invRodrigues(R):
-	#https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation
 
 	th = np.arccos((np.trace(R) - 1)/2)
-	#return cv2.Rodrigues(R.astype('float'))[0].reshape(-1)
 	if th == 0 or np.isnan(th):
-		return np.zeros(3).reshape(-1, 1), cv2.Rodrigues(R.astype('float'))[0]
+		return np.zeros(3).reshape(-1, 1)
 	else:
-		'''
-		r = (1/(2*np.sin(th)))*np.array([R[2, 1] - R[1, 2],
-			 							 R[0, 2] - R[2, 0],
-		 								 R[1, 0] - R[0, 1]]).T			 		
-		'''
 		A = (R - R.T)/2
 		a32, a13, a21 = A[2,1], A[0,2], A[1,0]
 		
@@ -334,8 +315,7 @@ def invRodrigues(R):
 		u  = rho/s
 		th = np.arctan2(s, c)
 		r  = u*th
-		
-				 
+						 
 	return r
 	   
 
@@ -349,8 +329,6 @@ Q5.3: Rodrigues residual.
             x, the flattened concatenationg of P, r2, and t2.
     Output: residuals, the difference between original and estimated projections
 '''
-#########ASK Question on Piazza
-# used to be rodriguesResidual(K1, M1, p1, K2, p2, x)
 def rodriguesResidual(K1, M1, p1, K2, p2, x):
 	N = p1.shape[0]
 
@@ -397,7 +375,6 @@ def bundleAdjustment(K1, M1, p1, K2, M2_init, p2, P_init):
 	x_init = np.concatenate([P_init.reshape([-1]), r2, t2])
 	rod_func  = lambda x: (rodriguesResidual(K1,M1,p1,K2,p2,x)**2).sum()
 	#rod_func  = lambda x: rodriguesResidual(K1, M1, p1, K2, p2, x)
-
 	#x_star, flag = leastsq(rod_func, x_init)
 	res = minimize(rod_func, x_init)
 	x_star = res.x
@@ -409,8 +386,3 @@ def bundleAdjustment(K1, M1, p1, K2, M2_init, p2, P_init):
 
 	return M2, P_star 
 
-if __name__ == '__main__':
-	data = np.load('../data/some_corresp.npz')
-	pts1, pts2 = data['pts1'], data['pts2']
-	M = 400
-	eightpoint(pts1, pts2, M)
