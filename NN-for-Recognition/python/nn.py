@@ -10,9 +10,9 @@ from util import *
 # X be [Examples, Dimensions]
 def initialize_weights(in_size,out_size,params,name=''):
     W, b = None, None
-    b = np.zeros(out_size)
-    var = np.sqrt(6)/np.sqrt(in_size + out_size)
-    W = np.random.uniform(-var, var, (in_size, out_size))
+    b = np.zeros(out_size).astype('float64')
+    var = np.sqrt(6.0)/np.sqrt(in_size + out_size)
+    W = np.random.uniform(-var, var, (in_size, out_size)).astype('float64')
     params['W' + name] = W
     params['b' + name] = b
 
@@ -20,7 +20,7 @@ def initialize_weights(in_size,out_size,params,name=''):
 # x is a matrix
 # a sigmoid activation function
 def sigmoid(x):
-    res =  1./(1+np.exp(-x))
+    res =  1.0/(1.0 + np.exp(-x))
     return res
 
 # Q 2.2.2
@@ -54,8 +54,9 @@ def forward(X,params,name='',activation=sigmoid):
 # x is [examples,classes]
 # softmax should be done for each row
 def softmax(x):
-	exp_x = np.exp(x-np.max(x,axis=0))
-	res   =  exp_x/np.sum(exp_x,axis=1,keepdims=True)    
+	exp_x = np.exp(x.T-np.max(x,axis=1)).T
+	S     = np.sum(exp_x,axis=1,keepdims=True) 
+	res   = np.divide(exp_x, S)   
 	return res
 
 # Q 2.2.3
@@ -90,15 +91,12 @@ def backwards(delta,params,name='',activation_deriv=sigmoid_deriv):
 	W = params['W' + name]
 	b = params['b' + name]
 	X, pre_act, post_act = params['cache_' + name]
-
-	jacobian   = activation_deriv(post_act)
-
-	gradDivPre =  delta * jacobian
-
-	grad_b = np.sum(gradDivPre, axis=0,keepdims=False)
-	grad_W = X.T @ gradDivPre 
-
-	grad_X = gradDivPre @ W.T 
+	#Z = XW + b 
+	delta =  delta *  activation_deriv(post_act)
+	
+	grad_b = np.sum(delta, axis=0, keepdims=False)
+	grad_W = X.T @ delta
+	grad_X = delta @ W.T 
 
 
 	# store the gradients
@@ -117,7 +115,7 @@ def get_random_batches(x,y,batch_size):
     
     for i in range(n_batches):
     	randIdx = np.random.choice(N, batch_size, replace=False)
-    	batch = (x[randIdx, :], y[randIdx, :])
+    	batch = (x[randIdx, :].astype('float64'), y[randIdx, :].astype('float64'))
     	batches.append(batch)
     return batches
     

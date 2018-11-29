@@ -49,7 +49,6 @@ print(h1.shape)
 # Q 2.2.2
 # implement softmax
 probs = forward(h1,params,'output',softmax)
-
 # make sure you understand these values!
 # positive, ~1, ~1, (40,4)
 print(probs.min(),min(probs.sum(1)),max(probs.sum(1)),probs.shape)
@@ -116,6 +115,7 @@ for itr in range(max_iters):
 		delta2 = backwards(delta1, params, 'output', linear_deriv)
 		# Implement backwards!
 		backwards(delta2, params, 'layer1', sigmoid_deriv)
+
 		params['Wlayer1'] -= learning_rate*params['grad_Wlayer1']
 		params['blayer1'] -= learning_rate*params['grad_blayer1']
 		params['Woutput'] -= learning_rate*params['grad_Woutput']
@@ -132,6 +132,19 @@ for itr in range(max_iters):
 
 # Q 2.5 should be implemented in this file
 # you can do this before or after training the network. 
+initialize_weights(2,25,params,'layer1')
+initialize_weights(25,4,params,'output')
+
+h1 = forward(x, params,'layer1')
+probs = forward(h1, params, 'output', softmax)
+loss, acc = compute_loss_and_acc(y, probs)
+delta1 = probs
+y_idx = np.argmax(y, axis=1)
+
+delta1[np.arange(probs.shape[0]), y_idx] -= 1
+delta2 = backwards(delta1, params, 'output', linear_deriv)
+# Implement backwards!
+backwards(delta2, params, 'layer1', sigmoid_deriv)
 
 
 # save the old params
@@ -170,6 +183,7 @@ for k,v in params.items():
 				loss_m, _ = compute_loss_and_acc(y, probs)
 				params['grad_' + k][i, j] = (loss_p - loss_m)/(2*eps)
 				params[k][i] +=eps
+ 
     # we have a real parameter!
     # for each value inside the parameter
     #   add epsilon
@@ -187,5 +201,6 @@ for k in params.keys():
         total_error += err
 # should be less than 1e-4
 print('total {:.2e}'.format(total_error))
-k = 'Wlayer1'
-print(params[k])
+#k = 'Wlayer1'
+#print(params[k])
+

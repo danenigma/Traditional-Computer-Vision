@@ -13,8 +13,12 @@ valid_x = valid_data['valid_data']
 
 dim = 32
 # do PCA
-train_x = train_x - np.mean(train_x, axis = 0)
-valid_x = valid_x - np.mean(valid_x, axis = 0)
+
+mu_train_x = np.mean(train_x, axis = 0)
+mu_valid_x = np.mean(valid_x, axis = 0)
+
+train_x = train_x - mu_train_x
+valid_x = valid_x - mu_valid_x 
 
 [U, S, V] = np.linalg.svd(train_x.T)
 
@@ -38,7 +42,7 @@ for i in range(5):
 #recon_valid = None
 recon_valid = valid_x.dot(U[:, :dim]) @ U[:, :dim].T
 total = []
-for pred,gt in zip(recon_valid,valid_x):
+for pred,gt in zip(recon_valid + mu_valid_x,valid_x + mu_valid_x):
     total.append(psnr(gt,pred))
 print(np.array(total).mean())
 
